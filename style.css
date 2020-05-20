@@ -1,3 +1,7 @@
+body {
+  margin: 0;
+}
+
 html {
   box-sizing: border-box;
 }
@@ -6,20 +10,22 @@ html {
 *::before {
   box-sizing: inherit;
 }
+.area {
+  display: flex;
+  justify-content: space-evenly;
+}
 .tube {
-  width: 600px;
-  height: 1200px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-basis: 60%;
+  height: 100vh;
   background-color: rgb(81, 89, 92);
-  margin: 0 auto;
-  font-size: 0;
+  font-size: 25px;
 }
 .cube {
-  display: inline-block;
-  width: 60px;
-  height: 60px;
+  flex-basis: 10%;
   border: solid 1px rgb(235, 241, 226);
   color: rgb(136, 165, 42);
-  font-size: 30px;
 }
 .dynamic-figure {
   background-color: white;
@@ -27,12 +33,12 @@ html {
 .static-figure {
   background-color: chartreuse;
 }
+.btnArea {
+  align-self: center;
+}
 .btnStop,
 .btnSpin {
-  display: block;
-  margin: auto;
-  width: 500px;
-  height: 100px;
+  display: inline-block;
   background-color: brown;
   font-size: 60px;
   cursor: pointer;
