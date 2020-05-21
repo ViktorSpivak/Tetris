@@ -27,31 +27,40 @@ const quantityOfFigures = figures.length;
 const randomFigure = () => Math.floor(Math.random() * quantityOfFigures);
 
 const moveFigure = (figure) => {
-  let numOfFigure = 0;
+  const speed = 600;
+  let runningFigure = 0;
   let coordinate = 0;
+
   const moveHorizon = (event) => {
-    const leftStop = figure[numOfFigure].some(
-      (el) =>
-        (el + coordinate).toString()[
-          (el + coordinate).toString().length - 1
-        ] === "0"
+    const leftStop = figure[runningFigure].some(
+      (el) => (el + coordinate).toString().split("").pop() === "0"
+    );
+    const rightStop = figure[runningFigure].some(
+      (el) => (el + coordinate).toString().split("").pop() === "9"
     );
 
-    const rightStop = figure[numOfFigure].some(
-      (el) =>
-        (el + coordinate).toString()[
-          (el + coordinate).toString().length - 1
-        ] === "9"
-    );
-    leftStop || (event.key === "ArrowLeft" && coordinate--);
-    rightStop || (event.key === "ArrowRight" && coordinate++);
-    console.log(coordinate);
+    if (!figure[runningFigure].some((elem) => elem + coordinate > 199)) {
+      leftStop ||
+        figure[runningFigure].some((elem) =>
+          document
+            .getElementById(coordinate - 1 + elem)
+            .classList.contains("static-figure")
+        ) ||
+        (event.key === "ArrowLeft" && coordinate-- && console.log("<"));
+      rightStop ||
+        figure[runningFigure].some((elem) =>
+          document
+            .getElementById(coordinate + 1 + elem)
+            .classList.contains("static-figure")
+        ) ||
+        (event.key === "ArrowRight" && coordinate++ && console.log(">"));
+    }
   };
   document.body.addEventListener("keydown", moveHorizon);
 
   const moveVertical = setInterval(() => {
-    // console.log(coordinate);
-    const figureDownLimiter = figure[numOfFigure].some(
+    console.log(coordinate);
+    const figureDownLimiter = figure[runningFigure].some(
       (elem) =>
         elem + coordinate > 199 ||
         document
@@ -66,7 +75,7 @@ const moveFigure = (figure) => {
       arr.forEach((elem) =>
         elem.classList.replace("dynamic-figure", "static-figure")
       );
-      console.log("fin:", coordinate);
+      // console.log("fin:", coordinate);
       clearInterval(moveVertical);
       if (coordinate) {
         startNewFigure();
@@ -75,21 +84,50 @@ const moveFigure = (figure) => {
     } else {
       const arr = document.querySelectorAll(".dynamic-figure");
       arr.forEach((elem) => elem.classList.remove("dynamic-figure"));
-      for (const elem of figure[numOfFigure]) {
-        console.log(elem + coordinate);
+      for (const elem of figure[runningFigure]) {
+        // console.log(elem + coordinate);
 
         document
           .getElementById(elem + coordinate)
           .classList.add("dynamic-figure");
       }
-      console.log("-");
+      // console.log("-");
     }
     coordinate += 10;
-  }, 200);
+  }, speed);
 
   const spin = () => {
-    numOfFigure += 1;
-    numOfFigure === figure.length && (numOfFigure = 0);
+    // runningFigure += 1;
+    // runningFigure === figure.length && (runningFigure = 0);
+    let rotatedFigure = runningFigure + 1;
+    rotatedFigure === figure.length && (rotatedFigure = 0);
+    const figureDownLimiter = figure[rotatedFigure].some(
+      (elem) =>
+        elem + coordinate > 199 ||
+        document
+          .getElementById(coordinate + elem)
+          .classList.contains("static-figure")
+    );
+
+    if (!figureDownLimiter) {
+      coordinate.toString().split("").pop() === "9" && (coordinate += 1);
+      coordinate.toString().split("").pop() === "8" &&
+        (coordinate -= 1) &&
+        figure[rotatedFigure].some(
+          (el) => (el + coordinate).toString().split("").pop() === "0"
+        ) &&
+        (coordinate -= 1);
+      // coordinate.toString().split("").pop() === "7" && (coordinate -= 2);
+      // if (coordinate.toString().split("").pop() === "0") {
+      //   figure[rotatedFigure].some(
+      //     (el) =>
+      //       (el + coordinate).toString().split("").pop() === "0" &&
+      //       coordinate + 1
+      //   );
+      // }
+      runningFigure = rotatedFigure;
+      console.log("@");
+    }
   };
   buttonSpin.addEventListener("click", spin);
   buttonStop.addEventListener("click", () => clearInterval(moveVertical));
