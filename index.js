@@ -2,9 +2,13 @@
 import figures from "./figures.js";
 
 const tube = document.querySelector(".tube");
-const buttonSpin = document.querySelector(".btnSpin");
 const buttonStop = document.querySelector(".btnStop");
+const buttonStart = document.querySelector(".btnStart");
+const buttonContinue = document.querySelector(".btnContinue");
 
+const speed = 300;
+// let score = 0;
+const stateStop = [];
 const createId = () => {
   let coordinate = 0;
   const arr = Array(20)
@@ -26,41 +30,70 @@ tube.insertAdjacentHTML("afterbegin", net);
 const quantityOfFigures = figures.length;
 const randomFigure = () => Math.floor(Math.random() * quantityOfFigures);
 
-const moveFigure = (figure) => {
-  const speed = 600;
-  let runningFigure = 0;
-  let coordinate = 0;
+const moveFigure = (
+  runningFigure,
+  spinFigure = 0,
+  coordinate = 3,
+  score = 0
+) => {
+  const spin = (code) => {
+    console.log("spin", coordinate);
+    if (code === "Space") {
+      let rotatedFigure = spinFigure + 1;
+      rotatedFigure === runningFigure.length && (rotatedFigure = 0);
+      const figureDownLimiter = runningFigure[rotatedFigure].some(
+        (elem) =>
+          elem + coordinate > 199 ||
+          document
+            .getElementById(coordinate + elem)
+            .classList.contains("static-figure")
+      );
 
+      if (!figureDownLimiter) {
+        coordinate.toString().split("").pop() === "9" && (coordinate += 1);
+        coordinate.toString().split("").pop() === "8" &&
+          (coordinate -= 1) &&
+          runningFigure[rotatedFigure].some(
+            (el) => (el + coordinate).toString().split("").pop() === "0"
+          ) &&
+          (coordinate -= 1);
+
+        spinFigure = rotatedFigure;
+        console.log("@");
+      }
+    }
+  };
+  !console.log("add spin") &&
+    document.addEventListener("keydown", (ev) => spin(ev.code));
   const moveHorizon = (event) => {
-    const leftStop = figure[runningFigure].some(
+    const leftStop = runningFigure[spinFigure].some(
       (el) => (el + coordinate).toString().split("").pop() === "0"
     );
-    const rightStop = figure[runningFigure].some(
+    const rightStop = runningFigure[spinFigure].some(
       (el) => (el + coordinate).toString().split("").pop() === "9"
     );
 
-    if (!figure[runningFigure].some((elem) => elem + coordinate > 199)) {
+    if (!runningFigure[spinFigure].some((elem) => elem + coordinate > 199)) {
       leftStop ||
-        figure[runningFigure].some((elem) =>
+        runningFigure[spinFigure].some((elem) =>
           document
             .getElementById(coordinate - 1 + elem)
             .classList.contains("static-figure")
         ) ||
-        (event.key === "ArrowLeft" && coordinate-- && console.log("<"));
+        (event.code === "ArrowLeft" && coordinate--);
       rightStop ||
-        figure[runningFigure].some((elem) =>
+        runningFigure[spinFigure].some((elem) =>
           document
             .getElementById(coordinate + 1 + elem)
             .classList.contains("static-figure")
         ) ||
-        (event.key === "ArrowRight" && coordinate++ && console.log(">"));
+        (event.code === "ArrowRight" && coordinate++);
     }
   };
-  document.body.addEventListener("keydown", moveHorizon);
+  document.addEventListener("keydown", moveHorizon);
 
   const moveVertical = setInterval(() => {
-    console.log(coordinate);
-    const figureDownLimiter = figure[runningFigure].some(
+    const figureDownLimiter = runningFigure[spinFigure].some(
       (elem) =>
         elem + coordinate > 199 ||
         document
@@ -69,70 +102,120 @@ const moveFigure = (figure) => {
     );
 
     if (figureDownLimiter) {
-      // console.log(figureDownLimiter);
-      document.body.removeEventListener("keydown", moveHorizon);
+      // document.removeEventListener("keydown", moveHorizon);
+
       const arr = document.querySelectorAll(".dynamic-figure");
       arr.forEach((elem) =>
         elem.classList.replace("dynamic-figure", "static-figure")
       );
-      // console.log("fin:", coordinate);
+      const quantityOfBingoLines = markingBingoLines();
+      if (quantityOfBingoLines) {
+        score +=
+          quantityOfBingoLines > 1
+            ? quantityOfBingoLines * quantityOfBingoLines * 100
+            : quantityOfBingoLines * 100;
+        document.querySelector(".score-Count").innerHTML = score;
+      }
+
+      deleteBingoLines(quantityOfBingoLines);
       clearInterval(moveVertical);
-      if (coordinate) {
+      !console.log("spin remove") &&
+        document.removeEventListener("keydown", (ev) => spin(ev.code));
+      // !console.log("stop remove") &&
+      //   buttonStop.removeEventListener("click", () => stop(currentState));
+
+      if (coordinate !== 3) {
         startNewFigure();
-        coordinate = 0;
       }
     } else {
       const arr = document.querySelectorAll(".dynamic-figure");
       arr.forEach((elem) => elem.classList.remove("dynamic-figure"));
-      for (const elem of figure[runningFigure]) {
-        // console.log(elem + coordinate);
-
+      for (const elem of runningFigure[spinFigure]) {
         document
           .getElementById(elem + coordinate)
           .classList.add("dynamic-figure");
       }
-      // console.log("-");
     }
+
     coordinate += 10;
-  }, speed);
-
-  const spin = () => {
-    // runningFigure += 1;
-    // runningFigure === figure.length && (runningFigure = 0);
-    let rotatedFigure = runningFigure + 1;
-    rotatedFigure === figure.length && (rotatedFigure = 0);
-    const figureDownLimiter = figure[rotatedFigure].some(
-      (elem) =>
-        elem + coordinate > 199 ||
-        document
-          .getElementById(coordinate + elem)
-          .classList.contains("static-figure")
+    stateStop.splice(
+      0,
+      5,
+      moveVertical,
+      runningFigure,
+      spinFigure,
+      coordinate,
+      score
     );
-
-    if (!figureDownLimiter) {
-      coordinate.toString().split("").pop() === "9" && (coordinate += 1);
-      coordinate.toString().split("").pop() === "8" &&
-        (coordinate -= 1) &&
-        figure[rotatedFigure].some(
-          (el) => (el + coordinate).toString().split("").pop() === "0"
-        ) &&
-        (coordinate -= 1);
-      // coordinate.toString().split("").pop() === "7" && (coordinate -= 2);
-      // if (coordinate.toString().split("").pop() === "0") {
-      //   figure[rotatedFigure].some(
-      //     (el) =>
-      //       (el + coordinate).toString().split("").pop() === "0" &&
-      //       coordinate + 1
-      //   );
-      // }
-      runningFigure = rotatedFigure;
-      console.log("@");
-    }
-  };
-  buttonSpin.addEventListener("click", spin);
-  buttonStop.addEventListener("click", () => clearInterval(moveVertical));
+  }, speed);
 };
-startNewFigure();
+
+buttonStart.addEventListener("click", startNewFigure);
+buttonStop.addEventListener("click", stop);
 function startNewFigure() {
-  moveFigure(figures[randomFigure()]);
+  let spinFigure, coordinate;
+  buttonStart.removeEventListener("click", startNewFigure);
+
+  const numberOfFigure = randomFigure();
+  const currentState = moveFigure(
+    figures[numberOfFigure],
+    spinFigure,
+    coordinate
+  );
+}
+function stop() {
+  buttonStart.addEventListener("click", startNewFigure);
+  buttonContinue.addEventListener("click", continueGame);
+  stateStop[0] &&
+    clearInterval(stateStop[0]) &&
+    buttonStop.removeEventListener("click", stop);
+}
+function continueGame() {
+  console.log(stateStop);
+
+  moveFigure(stateStop[1], stateStop[2], stateStop[3], stateStop[4]);
+}
+function markingBingoLines() {
+  let quantityOfBingoLines = null;
+  for (let line = 0; line <= 190; line += 10) {
+    for (let j = 0; j <= 9; j += 1) {
+      let id = line + j;
+      if (document.getElementById(id).classList.contains("static-figure")) {
+        if (id === line + 9) {
+          quantityOfBingoLines++;
+
+          for (let x = line; x <= id; x++) {
+            document.getElementById(x).classList.remove("static-figure");
+            document.getElementById(x).classList.add("bingo-line");
+          }
+        }
+      } else break;
+    }
+  }
+  return quantityOfBingoLines;
+}
+
+function deleteBingoLines(quantityOfBingoLines) {
+  setTimeout(() => {
+    for (let i = 0; i < quantityOfBingoLines; i++) {
+      const bingoLines = document.querySelectorAll(".bingo-line");
+      const firstElemIdBingoLine = bingoLines[0].id;
+      bingoLines.forEach(
+        (el) =>
+          Number(el.id) < Number(firstElemIdBingoLine) + 10 &&
+          el.classList.remove("bingo-line")
+      );
+      const staticElements = document.querySelectorAll(".static-figure");
+      const staticElIdsAboveBingoLine = Array.from(staticElements)
+        .map((el) => el.id)
+        .filter((el) => el < bingoLines[0].id);
+      staticElIdsAboveBingoLine.forEach((el) => {
+        document.getElementById(Number(el)).classList.remove("static-figure");
+        document.getElementById(Number(el) + 10).classList.add("static-figure");
+      });
+      staticElIdsAboveBingoLine.forEach((el) => {
+        document.getElementById(Number(el) + 10).classList.add("static-figure");
+      });
+    }
+  }, 500);
 }

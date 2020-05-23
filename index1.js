@@ -1,79 +1,279 @@
-"use strict";
-const tube = document.querySelector(".tube");
-const createId = () => {
-  //   let i = 0;
-  const arr = Array(20)
-    .fill("")
-    .map((none, index) =>
-      Array(10)
-        .fill("")
-        .map((none, idx) => index.toString() + idx)
-    );
-  console.log(arr);
+import figures from "./figures.js";
 
-  return arr;
-};
-const arrOfId = createId();
-const net = arrOfId
-  .map(el =>
-    el.map(el => (el = `<div id='${el}' class='cube'>${el}</div>`)).join("")
-  )
-  .join("");
-tube.insertAdjacentHTML("afterbegin", net);
-const figures = [
-  [0, 1, 2, 3],
-  [0, 1, 2, 12],
-  [11, 12, 0, 1],
-  [0, 1, 10, 11],
-  [0, 1, 2],
-  [0, 1, 2, 10],
-  [0],
-  [0, 1, 2, 11]
-];
-const min = 0;
-const max = figures.length - 1;
-const randomFigure = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1) + min);
-};
-const verticalMoveFigure = figure => {
-  //   const moveHorizon = event => {
-  //     event.key === "ArrowLeft" && i--;
-  //     event.key === "ArrowRight" && i++;
-  //   };
-  //   document.body.addEventListener("keydown", moveHorizon);
-  let i = 0;
-  const move = setInterval(() => {
-    if (
-      figure.some(elem => elem + i > 199) ||
-      figure.some(elem =>
-        document.getElementById(i + elem).classList.contains("static-figure")
+// const speed = 300;
+// let score = 0;
+// const dynamicParamsStop = [];
+
+// const randomFigure = () =>
+class Tetris {
+  constructor() {
+    this.netIds = this.initArrIds();
+    this.tube = this.initTube(this.netIds);
+    this.buttons = this.initButtons();
+    this.figures = figures;
+    this.dynamicParams = {
+      moveVertical: null,
+      runningFigure: null,
+      spinFigure: 0,
+      coordinate: 3,
+      score: 0,
+      speed: 300,
+      stop: false,
+      quantityOfBingoLines: 0,
+    };
+    this.eventListeners = this.initListeners();
+  }
+  initArrIds = () => {
+    let id = 0;
+    const arrOfIds = Array(20)
+      .fill("")
+      .map((none) =>
+        Array(10)
+          .fill("")
+          .map((none) => id++)
+      );
+
+    return arrOfIds;
+  };
+  initTube = (arrOfIds) => {
+    const net = arrOfIds
+      .map((el) =>
+        el.map((el) => (el = `<div id='${el}' class='cube'></div>`)).join("")
       )
-    ) {
-      for (const elem of figure) {
-        document
-          .getElementById(i - 10 + elem)
-          .classList.replace("dynamic-figure", "static-figure");
+      .join("");
+    const tube = document.querySelector(".tube");
+    tube.insertAdjacentHTML("afterbegin", net);
+    return tube;
+  };
+  initButtons = () => {
+    const buttons = {
+      stop: document.querySelector(".btnStop"),
+      start: document.querySelector(".btnStart"),
+      continue: document.querySelector(".btnContinue"),
+    };
+    return buttons;
+  };
+  randomFigure = () => {
+    const quantityOfFigures = this.figures.length;
+    const numberOfFigure = Math.floor(Math.random() * quantityOfFigures);
+    return numberOfFigure;
+  };
+  startNewFigure() {
+    const randomFigure = this.randomFigure();
+    this.dynamicParams.moveVertical = null;
+    this.dynamicParams.spinFigure = 0;
+    this.dynamicParams.coordinate = 3;
+    this.dynamicParams.runningFigure = this.figures[randomFigure];
+    this.moveFigure();
+  }
+
+  startGame = () => {
+    if (this.dynamicParams.stop || !this.dynamicParams.moveVertical) {
+      const tube = document.querySelector(".tube");
+      while (tube.firstChild.id) {
+        tube.removeChild(tube.firstChild);
       }
+      document.querySelector(".score-count").textContent = "000";
+      this.initTube(this.netIds);
+      const randomFigure = this.randomFigure();
+      this.dynamicParams.runningFigure = this.figures[randomFigure];
+      this.dynamicParams.coordinate = 3;
+      this.dynamicParams.score = 0;
+      this.dynamicParams.stop = false;
+      document.querySelector(".lastMassage").classList.remove("turnOnMassage");
+      this.moveFigure();
+    }
+  };
+  stop = () => {
+    clearInterval(this.dynamicParams.moveVertical);
+    this.dynamicParams.stop = true;
+  };
+  initListeners = () => {
+    this.buttons.start.addEventListener("click", this.startGame);
+    this.buttons.stop.addEventListener("click", this.stop);
+    this.buttons.continue.addEventListener("click", this.continueGame);
+    document.addEventListener(
+      "keydown",
+      (ev) => ev.code === "Space" && this.spin()
+    );
+    document.addEventListener(
+      "keydown",
+      (ev) =>
+        (ev.code === "ArrowRight" || ev.code === "ArrowLeft") &&
+        this.moveHorizon(ev.code)
+    );
+  };
+  spin = () => {
+    let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
+    if (runningFigure) {
+      let rotatedFigure = spinFigure + 1;
+      rotatedFigure === runningFigure.length && (rotatedFigure = 0);
+      const figureDownLimiter = runningFigure[rotatedFigure].some(
+        (elem) =>
+          elem + coordinate > 199 ||
+          document
+            .getElementById(coordinate + elem)
+            .classList.contains("static-figure")
+      );
 
-      // document.body.removeEventListener("keydown", moveHorizon);
-      clearInterval(move);
-    } else {
-      const arr = document.querySelectorAll(".dynamic-figure");
-      arr.forEach(elem => elem.classList.remove("dynamic-figure"));
+      if (!figureDownLimiter) {
+        coordinate.toString().split("").pop() === "9" && (coordinate += 1);
+        coordinate.toString().split("").pop() === "8" &&
+          (coordinate -= 1) &&
+          runningFigure[rotatedFigure].some(
+            (el) => (el + coordinate).toString().split("").pop() === "0"
+          ) &&
+          (coordinate -= 1);
 
-      for (const elem of figure) {
-        document.getElementById(elem + i).classList.add("dynamic-figure");
+        this.dynamicParams.spinFigure = rotatedFigure;
+        // console.log("@");
       }
     }
-    i += 10;
-  }, 400);
+  };
+  moveHorizon = (code) => {
+    let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
+    const leftStop = runningFigure[spinFigure].some(
+      (el) => (el + coordinate).toString().split("").pop() === "0"
+    );
+    const rightStop = runningFigure[spinFigure].some(
+      (el) => (el + coordinate).toString().split("").pop() === "9"
+    );
 
-  document.body.addEventListener("dblclick", () => clearInterval(move));
-};
+    if (!runningFigure[spinFigure].some((elem) => elem + coordinate > 199)) {
+      leftStop ||
+        runningFigure[spinFigure].some((elem) =>
+          document
+            .getElementById(coordinate - 1 + elem)
+            .classList.contains("static-figure")
+        ) ||
+        (code === "ArrowLeft" && coordinate--);
+      rightStop ||
+        runningFigure[spinFigure].some((elem) =>
+          document
+            .getElementById(coordinate + 1 + elem)
+            .classList.contains("static-figure")
+        ) ||
+        (code === "ArrowRight" && coordinate++);
+    }
 
-document.body.addEventListener("click", () =>
-  verticalMoveFigure(figures[randomFigure(min, max)])
-);
-verticalMoveFigure(figures[randomFigure(min, max)]);
-const x = "string";
-console.log(x[x.length - 1]);
+    this.dynamicParams.coordinate = coordinate;
+  };
+
+  moveFigure() {
+    let { score, speed } = this.dynamicParams;
+    const moveVertical = setInterval(() => {
+      let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
+      const figureDownLimiter = runningFigure[spinFigure].some(
+        (elem) =>
+          elem + coordinate > 199 ||
+          document
+            .getElementById(coordinate + elem)
+            .classList.contains("static-figure")
+      );
+
+      if (figureDownLimiter) {
+        const arr = document.querySelectorAll(".dynamic-figure");
+        arr.forEach((elem) =>
+          elem.classList.replace("dynamic-figure", "static-figure")
+        );
+        const quantityOfBingoLines = this.markingBingoLines();
+        if (quantityOfBingoLines) {
+          score =
+            quantityOfBingoLines > 1
+              ? quantityOfBingoLines * quantityOfBingoLines * 100
+              : quantityOfBingoLines * 100;
+          this.dynamicParams.score += score;
+          document.querySelector(
+            ".score-count"
+          ).innerHTML = this.dynamicParams.score;
+        }
+        this.dynamicParams.quantityOfBingoLines = quantityOfBingoLines;
+        this.deleteBingoLines();
+        clearInterval(moveVertical);
+        if (coordinate !== 3) {
+          this.startNewFigure();
+          return;
+        } else {
+          this.lastMassage();
+          return;
+        }
+      } else {
+        const arr = document.querySelectorAll(".dynamic-figure");
+        arr.forEach((elem) => elem.classList.remove("dynamic-figure"));
+        for (const elem of runningFigure[spinFigure]) {
+          document
+            .getElementById(elem + coordinate)
+            .classList.add("dynamic-figure");
+        }
+      }
+      coordinate += 10;
+      this.dynamicParams.coordinate = coordinate;
+    }, speed);
+
+    this.dynamicParams.moveVertical = moveVertical;
+  }
+
+  continueGame = () => {
+    if (this.dynamicParams.stop) {
+      this.moveFigure();
+      this.dynamicParams.stop = false;
+    }
+  };
+  markingBingoLines = () => {
+    let quantityOfBingoLines = null;
+    for (let line = 0; line <= 190; line += 10) {
+      for (let j = 0; j <= 9; j += 1) {
+        let id = line + j;
+        if (document.getElementById(id).classList.contains("static-figure")) {
+          if (id === line + 9) {
+            quantityOfBingoLines++;
+
+            for (let x = line; x <= id; x++) {
+              document.getElementById(x).classList.remove("static-figure");
+              document.getElementById(x).classList.add("bingo-line");
+            }
+          }
+        } else break;
+      }
+    }
+    return quantityOfBingoLines;
+  };
+  deleteBingoLines = () => {
+    setTimeout(() => {
+      const { quantityOfBingoLines } = this.dynamicParams;
+      for (let i = 0; i < quantityOfBingoLines; i++) {
+        const bingoLines = document.querySelectorAll(".bingo-line");
+        const firstElemIdBingoLine = bingoLines[0].id;
+        bingoLines.forEach(
+          (el) =>
+            Number(el.id) < Number(firstElemIdBingoLine) + 10 &&
+            el.classList.remove("bingo-line")
+        );
+        const staticElements = document.querySelectorAll(".static-figure");
+        const staticElIdsAboveBingoLine = Array.from(staticElements)
+          .map((el) => el.id)
+          .filter((el) => el < bingoLines[0].id);
+        staticElIdsAboveBingoLine.forEach((el) => {
+          document.getElementById(Number(el)).classList.remove("static-figure");
+          document
+            .getElementById(Number(el) + 10)
+            .classList.add("static-figure");
+        });
+        staticElIdsAboveBingoLine.forEach((el) => {
+          document
+            .getElementById(Number(el) + 10)
+            .classList.add("static-figure");
+        });
+      }
+    }, 500);
+  };
+  lastMassage = () => {
+    const lastMassage = document.querySelector(".lastMassage");
+    const finScore = document.querySelector(".finScore");
+    finScore.innerHTML = `<p>Final score : ${this.dynamicParams.score}</p>`;
+    lastMassage.classList.add("turnOnMassage");
+    this.dynamicParams.moveVertical = null;
+  };
+}
+const tetris = new Tetris();
+// console.log(tetris);
