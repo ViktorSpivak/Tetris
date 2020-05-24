@@ -13,14 +13,27 @@ html {
 .area {
   margin: 0 auto;
   display: flex;
-  justify-content: space-evenly;
+  justify-content: center;
+  width: 1420px;
   /* width: 50%; */
+}
+.control {
+  display: flex;
+  text-align: center;
+  flex-direction: column;
+  align-self: center;
+  flex-basis: 20%;
+  font-size: 25px;
+}
+.controlButtons {
+  list-style: none;
+  padding: 0;
 }
 .tube {
   position: relative;
   display: flex;
+  flex-basis: 35%;
   flex-wrap: wrap;
-  flex-basis: 40%;
   height: 100vh;
   background-color: rgb(124, 171, 224);
   /* font-size: 25px; */
@@ -28,7 +41,6 @@ html {
 .lastMassage {
   position: absolute;
   text-align: center;
-  /* line-height: 100%; */
   font-size: 70px;
   left: 10%;
   right: 10%;
@@ -43,8 +55,9 @@ html {
 }
 .cube {
   flex-basis: 10%;
-  border: solid 1px rgb(235, 241, 226);
-  color: rgb(136, 165, 42);
+  border: solid 1px white;
+  color: rgb(90, 85, 85);
+  font-size: 30px;
 }
 .dynamic-figure {
   background-color: rgb(187, 221, 75);
@@ -56,33 +69,61 @@ html {
 .static-figure::after {
   position: absolute;
   content: "";
-  top: 10%;
-  bottom: 10%;
-  left: 10%;
-  right: 10%;
+  top: 25%;
+  bottom: 25%;
+  left: 25%;
+  right: 25%;
   background-color: brown;
 }
 .manageBlock {
   align-self: center;
-}
-.btnStop,
-.btnStart,
-.btnContinue {
-  display: block;
-  width: 100%;
-  background-color: brown;
-  font-size: 40px;
-  cursor: pointer;
-}
-.bingo-line {
-  background-color: brown;
+  flex-basis: 20%;
 }
 .score {
   text-align: center;
   font-size: 35px;
   color: olive;
-  border: solid 2px brown;
+  border: solid 3px rgb(71, 165, 42);
 }
+.btnStop,
+.btnStart,
+.btnContinue {
+  display: block;
+  margin: 0 auto;
+  width: 80%;
+  background-color: brown;
+  font-size: 40px;
+  cursor: pointer;
+}
+.bingo-line {
+  position: relative;
+  background-color: rgb(3, 255, 213);
+}
+.bingo-line::after {
+  position: absolute;
+  content: "";
+  top: 25%;
+  bottom: 25%;
+  left: 25%;
+  right: 25%;
+  border-radius: 50%;
+  background-color: brown;
+}
+
 .finScore {
   font-size: 35px;
+}
+.nextFigure {
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  width: 70%;
+  height: 10vh;
+}
+.nextFigure-cube {
+  flex-basis: 25%;
+}
+.paint {
+  border: solid 1px white;
+  background-color: rgb(124, 171, 224);
 }
