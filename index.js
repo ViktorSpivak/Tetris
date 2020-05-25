@@ -5,8 +5,10 @@ class Tetris {
     this.netIds = this.initArrIds();
     this.forecastArea = this.initForecastArea(this.netIds);
     this.tube = this.initTube(this.netIds);
-    this.buttons = this.initButtons();
+    this.initButtons();
+    this.initLastMassage();
     this.figures = figures;
+    this.eventListeners = this.initListeners();
     this.dynamicParams = {
       moveVertical: null,
       runningFigure: null,
@@ -15,10 +17,11 @@ class Tetris {
       coordinate: 3,
       score: 0,
       speed: 300,
+      gameOver: false,
       stop: false,
       quantityOfBingoLines: 0,
+      results: [],
     };
-    this.eventListeners = this.initListeners();
   }
   initArrIds = () => {
     let id = 0;
@@ -60,13 +63,28 @@ class Tetris {
     nextFigureElem.insertAdjacentHTML("afterbegin", forecastArea);
     return nextFigureElem;
   };
+
   initButtons = () => {
-    const buttons = {
-      stop: document.querySelector(".btnStop"),
-      start: document.querySelector(".btnStart"),
-      continue: document.querySelector(".btnContinue"),
-    };
-    return buttons;
+    const btnArea = document.querySelector(".btnArea");
+    btnArea.insertAdjacentHTML(
+      "afterbegin",
+      "<button class=btnStart name=start type=button>Start new game</button><button class=btnStop name=stop type=button>Pause</button><button class=btnContinue name=continueGame type=button>Continue</button>"
+    );
+  };
+  updateResultsBar = () => {
+    const resultsList = document.querySelector(".results-list");
+
+    this.dynamicParams.results.push(this.dynamicParams.score);
+    document
+      .querySelector(".results-list")
+      .insertAdjacentHTML(
+        "beforeend",
+        `<li> ${this.dynamicParams.score} </li>`
+      );
+    resultsList.scrollTo({
+      top: resultsList.scrollHeight,
+      behavior: "smooth",
+    });
   };
   randomFigure = () => {
     const quantityOfFigures = this.figures.length;
@@ -78,11 +96,11 @@ class Tetris {
     this.dynamicParams.nextRunningFigure = this.figures[nextFigure];
     const nextFigureChildElem = document.querySelector(".nextFigure")
       .childNodes;
-    nextFigureChildElem.forEach((el) => el.classList.remove("paint"));
+    nextFigureChildElem.forEach((el) => el.classList.remove("nextFig__paint"));
     nextFigureChildElem.forEach(
       (el) =>
         this.dynamicParams.nextRunningFigure[0].includes(parseInt(el.id, 10)) &&
-        el.classList.add("paint")
+        el.classList.add("nextFig__paint")
     );
   };
   startNewFigure = () => {
@@ -93,49 +111,108 @@ class Tetris {
     this.nextFigureInit();
     this.moveFigure();
   };
-
   startNewGame = () => {
-    if (this.dynamicParams.stop || !this.dynamicParams.moveVertical) {
-      const tube = document.querySelector(".tube");
-      while (tube.firstChild.id) {
-        tube.removeChild(tube.firstChild);
-      }
-      document.querySelector(".score-count").textContent = "000";
-      this.initTube(this.netIds);
-      const randomFigure = this.randomFigure();
+    if (!this.dynamicParams.moveVertical) {
+      const figureNumber = this.randomFigure();
       this.nextFigureInit();
-      this.dynamicParams.runningFigure = this.figures[randomFigure];
-      this.dynamicParams.coordinate = 3;
-      this.dynamicParams.score = 0;
-      this.dynamicParams.stop = false;
-      document.querySelector(".lastMassage").classList.remove("turnOnMassage");
+      this.dynamicParams.runningFigure = this.figures[figureNumber];
       this.moveFigure();
+      return;
     }
+    clearInterval(this.dynamicParams.moveVertical);
+    this.updateResultsBar();
+    document.querySelector(".lastMassage").classList.remove("showLastMassage");
+    document.querySelector(".score-count").textContent = "000";
+    Array.from(this.tube.children).forEach((el) => {
+      el.classList.remove("dynamic-figure");
+      el.classList.remove("static-figure");
+    });
+    const figureNumber = this.randomFigure();
+    this.nextFigureInit();
+    this.dynamicParams.runningFigure = this.figures[figureNumber];
+    this.dynamicParams.coordinate = 3;
+    this.dynamicParams.stop = false;
+    this.dynamicParams.score = 0;
+    this.dynamicParams.gameOver = false;
+
+    this.moveFigure();
+    // if (this.dynamicParams.gameOver) {
+    //   this.updateResultsBar();
+    //   document
+    //     .querySelector(".lastMassage")
+    //     .classList.remove("showLastMassage");
+    //   document.querySelector(".score-count").textContent = "000";
+    //   Array.from(this.tube.children).forEach((el) => {
+    //     el.classList.remove("dynamic-figure");
+    //     el.classList.remove("static-figure");
+    //   });
+    //   const figureNumber = this.randomFigure();
+    //   this.nextFigureInit();
+    //   this.dynamicParams.runningFigure = this.figures[figureNumber];
+    //   this.dynamicParams.coordinate = 3;
+    //   this.dynamicParams.stop = false;
+    //   this.dynamicParams.score = 0;
+    //   this.dynamicParams.gameOver = false;
+    //   this.moveFigure();
+    //   return;
+    // }
+    // if (this.dynamicParams.stop) {
+    //   this.updateResultsBar();
+    //   document
+    //     .querySelector(".lastMassage")
+    //     .classList.remove("showLastMassage");
+    //   document.querySelector(".score-count").textContent = "000";
+    //   Array.from(this.tube.children).forEach((el) => {
+    //     el.classList.remove("dynamic-figure");
+    //     el.classList.remove("static-figure");
+    //   });
+    //   const figureNumber = this.randomFigure();
+    //   this.nextFigureInit();
+    //   this.dynamicParams.runningFigure = this.figures[figureNumber];
+    //   this.dynamicParams.coordinate = 3;
+    //   this.dynamicParams.stop = false;
+    //   this.dynamicParams.score = 0;
+    //   this.dynamicParams.gameOver = false;
+    //   this.moveFigure();
+    //   return;
+    // }
+    // if (this.dynamicParams.stop || !this.dynamicParams.moveVertical) {
   };
   stop = () => {
     clearInterval(this.dynamicParams.moveVertical);
     this.dynamicParams.stop = true;
   };
   initListeners = () => {
-    this.buttons.start.addEventListener("click", this.startNewGame);
-    this.buttons.stop.addEventListener("click", this.stop);
-    this.buttons.continue.addEventListener("click", this.continueGame);
-    document.addEventListener(
-      "keydown",
-      (ev) => ev.code === "Space" && this.spin()
-    );
-    document.addEventListener(
-      "keydown",
-      (ev) =>
-        (ev.code === "ArrowRight" || ev.code === "ArrowLeft") &&
-        this.moveHorizon(ev.code)
-    );
+    const btnArea = document.querySelector(".btnArea");
+    btnArea.addEventListener("click", (ev) => {
+      const { name } = ev.target;
+      console.log();
+      name === "start" && this.startNewGame();
+      name === "stop" && this.stop();
+      name === "continueGame" && this.continueGame();
+    });
+
+    document.addEventListener("keydown", (ev) => {
+      // ev.stopPropagation();
+      ev.preventDefault();
+      console.log("pause");
+
+      const { code } = ev;
+      code === "Space" && this.spin();
+      (code === "ArrowRight" || code === "ArrowLeft") && this.moveHorizon(code);
+    });
   };
   spin = () => {
     let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
+    // console.log(runningFigure);
+
     if (runningFigure) {
       let rotatedFigure = spinFigure + 1;
-      rotatedFigure === runningFigure.length && (rotatedFigure = 0);
+      if (rotatedFigure >= runningFigure.length) {
+        rotatedFigure = 0;
+      }
+      console.log(runningFigure[rotatedFigure], rotatedFigure);
+
       const figureDownLimiter = runningFigure[rotatedFigure].some(
         (elem) =>
           elem + coordinate > 199 ||
@@ -154,7 +231,6 @@ class Tetris {
           (coordinate -= 1);
 
         this.dynamicParams.spinFigure = rotatedFigure;
-        // console.log("@");
       }
     }
   };
@@ -186,11 +262,22 @@ class Tetris {
 
     this.dynamicParams.coordinate = coordinate;
   };
-
+  showLastMassage = () => {
+    const finScore = document.querySelector(".finScore");
+    finScore.textContent = `Final score : ${this.dynamicParams.score}`;
+    document.querySelector(".lastMassage").classList.add("showLastMassage");
+    // this.dynamicParams.moveVertical = null;
+    this.dynamicParams.gameOver = true;
+  };
   moveFigure() {
     let { score, speed } = this.dynamicParams;
     const moveVertical = setInterval(() => {
       let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
+
+      console.log(runningFigure[spinFigure], runningFigure, spinFigure);
+      // if (runningFigure.length >= spinFigure) {
+      //   spinFigure = 0;
+      // }
       const figureDownLimiter = runningFigure[spinFigure].some(
         (elem) =>
           elem + coordinate > 199 ||
@@ -200,11 +287,14 @@ class Tetris {
       );
 
       if (figureDownLimiter) {
-        const arr = document.querySelectorAll(".dynamic-figure");
-        arr.forEach((elem) =>
+        const runningFigureOnTube = document.querySelectorAll(
+          ".dynamic-figure"
+        );
+        runningFigureOnTube.forEach((elem) =>
           elem.classList.replace("dynamic-figure", "static-figure")
         );
         const quantityOfBingoLines = this.markingBingoLines();
+        this.dynamicParams.quantityOfBingoLines = quantityOfBingoLines;
         if (quantityOfBingoLines) {
           score =
             quantityOfBingoLines > 1
@@ -215,14 +305,14 @@ class Tetris {
             ".score-count"
           ).innerHTML = this.dynamicParams.score;
         }
-        this.dynamicParams.quantityOfBingoLines = quantityOfBingoLines;
+
         this.deleteBingoLines();
         clearInterval(moveVertical);
         if (coordinate !== 3) {
           this.startNewFigure();
           return;
         } else {
-          this.lastMassage();
+          this.showLastMassage();
           return;
         }
       } else {
@@ -242,7 +332,7 @@ class Tetris {
   }
 
   continueGame = () => {
-    if (this.dynamicParams.stop) {
+    if (this.dynamicParams.stop && this.dynamicParams.moveVertical) {
       this.moveFigure();
       this.dynamicParams.stop = false;
     }
@@ -295,12 +385,9 @@ class Tetris {
       }
     }, 500);
   };
-  lastMassage = () => {
-    const lastMassage = document.querySelector(".lastMassage");
-    const finScore = document.querySelector(".finScore");
-    finScore.innerHTML = `<p>Final score : ${this.dynamicParams.score}</p>`;
-    lastMassage.classList.add("turnOnMassage");
-    this.dynamicParams.moveVertical = null;
+  initLastMassage = () => {
+    const lastMassageElem = `<div class=lastMassage><p>GAME OVER</p><p class=finScore></p></div>`;
+    this.tube.insertAdjacentHTML("afterend", lastMassageElem);
   };
 }
 const tetris = new Tetris();

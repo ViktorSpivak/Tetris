@@ -28,9 +28,15 @@ html {
 .controlButtons {
   list-style: none;
   padding: 0;
+  width: 70%;
+  margin: 0 auto;
+}
+.controlButtons-list {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
 }
 .tube {
-  position: relative;
   display: flex;
   flex-basis: 35%;
   flex-wrap: wrap;
@@ -42,15 +48,14 @@ html {
   position: absolute;
   text-align: center;
   font-size: 70px;
-  left: 10%;
-  right: 10%;
-  top: 10%;
-  bottom: 40%;
+  top: 30%;
+  padding-left: 10px;
+  padding-right: 10px;
   background-color: blue;
-  opacity: 0;
   color: aliceblue;
+  opacity: 0;
 }
-.turnOnMassage {
+.showLastMassage {
   opacity: 1;
 }
 .cube {
@@ -69,10 +74,10 @@ html {
 .static-figure::after {
   position: absolute;
   content: "";
-  top: 25%;
-  bottom: 25%;
-  left: 25%;
-  right: 25%;
+  top: 20%;
+  bottom: 20%;
+  left: 20%;
+  right: 20%;
   background-color: brown;
 }
 .manageBlock {
@@ -80,10 +85,15 @@ html {
   flex-basis: 20%;
 }
 .score {
+  margin: 0 auto;
+  width: 80%;
   text-align: center;
   font-size: 35px;
   color: olive;
   border: solid 3px rgb(71, 165, 42);
+}
+.btnArea {
+  margin-top: 20px;
 }
 .btnStop,
 .btnStart,
@@ -123,7 +133,19 @@ html {
 .nextFigure-cube {
   flex-basis: 25%;
 }
-.paint {
+.nextFig__paint {
   border: solid 1px white;
   background-color: rgb(124, 171, 224);
+}
+.results {
+  width: 80%;
+  text-align: center;
+  margin: 0 auto;
+  border: solid 3px rgb(9, 144, 72);
+  margin-top: 20px;
+}
+.results-list {
+  height: 100px;
+  overflow-y: auto;
+  font-size: 25px;
 }

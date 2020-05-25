@@ -10,20 +10,26 @@
   <body>
     <div class="area">
       <div class="control">
-        <h2 class="x">Next figure</h2>
+        <h2>Next figure</h2>
         <div class="nextFigure"></div>
+        <h2>Controls</h2>
         <ul class="controlButtons">
-          <li><h2>Control</h2></li>
-          <li><span>Move left: </span><button>&#8592;</button></li>
-          <li><span>Move right: </span><button>&#8594;</button></li>
-          <li><span>Rotate: </span><button>Space</button></li>
+          <li class="controlButtons-list">
+            <span>Move left: </span><button>&#8592;</button>
+          </li>
+          <li class="controlButtons-list">
+            <span>Move right: </span><button>&#8594;</button>
+          </li>
+          <li class="controlButtons-list">
+            <span>Rotate: </span><button>Space</button>
+          </li>
         </ul>
       </div>
       <div class="tube">
-        <div class="lastMassage">
+        <!-- <div class="lastMassage">
           <p>GAME OVER</p>
           <p class="finScore"></p>
-        </div>
+        </div> -->
       </div>
 
       <div class="manageBlock">
@@ -32,10 +38,10 @@
           <span class="score-count">000</span>
         </div>
 
-        <div class="btnArea">
-          <button class="btnStart">Start new game</button>
-          <button class="btnStop">STOP</button>
-          <button class="btnContinue">Continue</button>
+        <div class="btnArea"></div>
+        <div class="results">
+          <h2>Results of games:</h2>
+          <ol class="results-list"></ol>
         </div>
       </div>
     </div>
