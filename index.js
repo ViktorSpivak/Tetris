@@ -5,6 +5,7 @@ class Tetris {
     this.netIds = this.initArrIds();
     this.forecastArea = this.initForecastArea(this.netIds);
     this.tube = this.initTube(this.netIds);
+
     this.initButtons();
     this.initLastMassage();
     this.figures = figures;
@@ -16,12 +17,13 @@ class Tetris {
       spinFigure: 0,
       coordinate: 3,
       score: 0,
-      speed: 300,
+      speed: 500,
       gameOver: false,
       stop: false,
       quantityOfBingoLines: 0,
       results: [],
     };
+    this.speed = this.initSpeedBar();
   }
   initArrIds = () => {
     let id = 0;
@@ -38,7 +40,7 @@ class Tetris {
   initTube = (arrOfIds) => {
     const net = arrOfIds
       .map((el) =>
-        el.map((el) => (el = `<div id=${el} class='cube'></div>`)).join("")
+        el.map((el) => (el = `<div id=${el} class='cube'>${el}</div>`)).join("")
       )
       .join("");
     const tube = document.querySelector(".tube");
@@ -63,7 +65,32 @@ class Tetris {
     nextFigureElem.insertAdjacentHTML("afterbegin", forecastArea);
     return nextFigureElem;
   };
-
+  initSpeedBar = () => {
+    let speedLevel = 10 - this.dynamicParams.speed / 100;
+    const speedBar = document.querySelector(".speed");
+    speedBar.insertAdjacentHTML(
+      "afterbegin",
+      `<button class=btnUp>Up</button><p class=speedValue>${speedLevel}</p><button class=btnDown>Down</button>`
+    );
+    const speedValue = document.querySelector(".speedValue");
+    const changeSpeed = (step) => {
+      step && step++;
+      step || step--;
+      if (speedLevel + step <= 10 && speedLevel + step >= 1) {
+        speedLevel += step;
+        this.dynamicParams.speed = (10 - speedLevel) * 100;
+        speedValue.textContent = `${speedLevel}`;
+        clearInterval(this.dynamicParams.moveVertical);
+        this.moveFigure();
+      }
+    };
+    document.querySelector(".btnUp").addEventListener("click", () => {
+      this.dynamicParams.moveVertical && changeSpeed(true);
+    });
+    document.querySelector(".btnDown").addEventListener("click", () => {
+      this.dynamicParams.moveVertical && changeSpeed(false);
+    });
+  };
   initButtons = () => {
     const btnArea = document.querySelector(".btnArea");
     btnArea.insertAdjacentHTML(
@@ -134,7 +161,7 @@ class Tetris {
     this.dynamicParams.stop = false;
     this.dynamicParams.score = 0;
     this.dynamicParams.gameOver = false;
-
+    this.dynamicParams.spinFigure = 0;
     this.moveFigure();
     // if (this.dynamicParams.gameOver) {
     //   this.updateResultsBar();
@@ -192,10 +219,9 @@ class Tetris {
       name === "continueGame" && this.continueGame();
     });
 
-    document.addEventListener("keydown", (ev) => {
-      // ev.stopPropagation();
+    document.body.addEventListener("keydown", (ev) => {
       ev.preventDefault();
-      console.log("pause");
+      // console.log("pause");
 
       const { code } = ev;
       code === "Space" && this.spin();
@@ -204,14 +230,13 @@ class Tetris {
   };
   spin = () => {
     let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
-    // console.log(runningFigure);
-
     if (runningFigure) {
       let rotatedFigure = spinFigure + 1;
       if (rotatedFigure >= runningFigure.length) {
         rotatedFigure = 0;
       }
-      console.log(runningFigure[rotatedFigure], rotatedFigure);
+
+      // console.log(runningFigure[rotatedFigure], rotatedFigure);
 
       const figureDownLimiter = runningFigure[rotatedFigure].some(
         (elem) =>
@@ -222,15 +247,29 @@ class Tetris {
       );
 
       if (!figureDownLimiter) {
-        coordinate.toString().split("").pop() === "9" && (coordinate += 1);
-        coordinate.toString().split("").pop() === "8" &&
-          (coordinate -= 1) &&
-          runningFigure[rotatedFigure].some(
-            (el) => (el + coordinate).toString().split("").pop() === "0"
-          ) &&
-          (coordinate -= 1);
+        // if (coordinate.toString().split("").pop() === "0") {
+        //   coordinate -= 1;
+        //   runningFigure[rotatedFigure].some(
+        //     (el) => (el + coordinate).toString().split("").pop() === "0"
+        //   );
+        // }
+        // console.log("@", coordinate);
+
+        const lastNumberOfCoordinate = coordinate.toString().split("").pop();
+        lastNumberOfCoordinate === "9" && (coordinate += 1);
+        // && console.log("+");
+        // console.log("@", coordinate);
+        // coordinate.toString().split("").pop() === "9"
+        // coordinate.toString().split("").pop() === "9" && (coordinate += 1);
+        // coordinate.toString().split("").pop() === "8" &&
+        //   (coordinate -= 1) &&
+        //   runningFigure[rotatedFigure].some(
+        //     (el) => (el + coordinate).toString().split("").pop() === "0"
+        //   ) &&
+        //   (coordinate -= 1);
 
         this.dynamicParams.spinFigure = rotatedFigure;
+        console.log("+++");
       }
     }
   };
@@ -271,10 +310,17 @@ class Tetris {
   };
   moveFigure() {
     let { score, speed } = this.dynamicParams;
+    const spinIn = () => {};
+
     const moveVertical = setInterval(() => {
       let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
-
-      console.log(runningFigure[spinFigure], runningFigure, spinFigure);
+      document.body.addEventListener("keydown", (ev) => {
+        // ev.preventDefault();
+        const { code } = ev;
+        code === "Space" && this.spin();
+        console.log("@");
+      });
+      // console.log(runningFigure[spinFigure], runningFigure, spinFigure);
       // if (runningFigure.length >= spinFigure) {
       //   spinFigure = 0;
       // }
@@ -324,6 +370,8 @@ class Tetris {
             .classList.add("dynamic-figure");
         }
       }
+      console.log("+");
+
       coordinate += 10;
       this.dynamicParams.coordinate = coordinate;
     }, speed);

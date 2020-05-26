@@ -149,3 +149,17 @@ html {
   overflow-y: auto;
   font-size: 25px;
 }
+.speed {
+  width: 70%;
+  margin: 0 auto;
+  /* border: solid 1px black; */
+  display: flex;
+  justify-content: space-around;
+}
+.btnUp,
+.btnDown {
+  width: 60px;
+}
+.speedValue {
+  margin: 0;
+}
