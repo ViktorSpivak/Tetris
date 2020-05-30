@@ -6,6 +6,7 @@ class Tetris {
     this.forecastArea = this.initForecastArea(this.netIds);
     this.tube = this.initTube(this.netIds);
     this.initButtons();
+    this.initLastMassage();
     this.figures = figures;
     this.eventListeners = this.initListeners();
     this.dynamicParams = {
@@ -15,7 +16,8 @@ class Tetris {
       spinFigure: 0,
       coordinate: 3,
       score: 0,
-      speed: 500,
+      speeds: { currentSpeed: 500, accelerateSpeed: 10 },
+      accelerate: false,
       gameOver: false,
       stop: false,
       quantityOfBingoLines: 0,
@@ -64,10 +66,11 @@ class Tetris {
     return nextFigureElem;
   };
   initSpeedBar = () => {
+    const speed = this.dynamicParams.speeds.currentSpeed;
     const minSpeedLevel = 0;
     const maxSpeedLevel = 10;
     const speedInterval = maxSpeedLevel + minSpeedLevel;
-    let speedLevel = speedInterval - this.dynamicParams.speed / 100;
+    let speedLevel = speedInterval - speed / 100;
 
     const speedBar = document.querySelector(".speed");
     speedBar.insertAdjacentHTML(
@@ -82,7 +85,8 @@ class Tetris {
         speedLevel + step >= minSpeedLevel
       ) {
         speedLevel += step;
-        this.dynamicParams.speed = (speedInterval - speedLevel) * 100;
+        this.dynamicParams.speeds.currentSpeed =
+          (speedInterval - speedLevel) * 100;
         speedValue.textContent = `${speedLevel}`;
         if (this.dynamicParams.moveVertical) {
           clearInterval(this.dynamicParams.moveVertical);
@@ -105,8 +109,8 @@ class Tetris {
     );
   };
   updateResultsBar = () => {
+    document.querySelector(".results").classList.add("showResults");
     const resultsList = document.querySelector(".results-list");
-
     this.dynamicParams.results.push(this.dynamicParams.score);
     document
       .querySelector(".results-list")
@@ -145,7 +149,6 @@ class Tetris {
     this.moveFigure();
   };
   startNewGame = () => {
-    this.initLastMassage();
     if (!this.dynamicParams.moveVertical) {
       const figureNumber = this.randomFigure();
       this.nextFigureInit();
@@ -230,7 +233,15 @@ class Tetris {
       const { code } = ev;
       code === "Space" && this.spin();
       (code === "ArrowRight" || code === "ArrowLeft") && this.moveHorizon(code);
+      code === "ArrowDown" && this.accelerate();
     });
+  };
+  accelerate = () => {
+    if (this.dynamicParams.moveVertical) {
+      this.dynamicParams.accelerate = true;
+      clearInterval(this.dynamicParams.moveVertical);
+      this.moveFigure();
+    }
   };
   spin = () => {
     let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
@@ -298,8 +309,10 @@ class Tetris {
     this.dynamicParams.gameOver = true;
   };
   moveFigure() {
-    let { score, speed } = this.dynamicParams;
-
+    let { score, accelerate } = this.dynamicParams;
+    let speed = accelerate
+      ? this.dynamicParams.speeds.accelerateSpeed
+      : this.dynamicParams.speeds.currentSpeed;
     const moveVertical = setInterval(() => {
       let { runningFigure, spinFigure, coordinate } = this.dynamicParams;
       const figureDownLimiter = runningFigure[spinFigure].some(
@@ -327,9 +340,10 @@ class Tetris {
           document.querySelector(
             ".score-count"
           ).innerHTML = this.dynamicParams.score;
+          this.deleteBingoLines();
         }
 
-        this.deleteBingoLines();
+        this.dynamicParams.accelerate = false;
         clearInterval(moveVertical);
         if (coordinate !== 3) {
           this.startNewFigure();
@@ -350,6 +364,7 @@ class Tetris {
       coordinate += 10;
       this.dynamicParams.coordinate = coordinate;
     }, speed);
+
     this.dynamicParams.moveVertical = moveVertical;
   }
   continueGame = () => {

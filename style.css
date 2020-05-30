@@ -15,7 +15,6 @@ html {
   display: flex;
   justify-content: center;
   width: 1420px;
-  /* width: 50%; */
 }
 .control {
   display: flex;
@@ -42,7 +41,6 @@ html {
   flex-wrap: wrap;
   height: 100vh;
   background-color: rgb(124, 171, 224);
-  /* font-size: 25px; */
 }
 .lastMassage {
   position: absolute;
@@ -143,6 +141,10 @@ html {
   margin: 0 auto;
   border: solid 3px rgb(9, 144, 72);
   margin-top: 20px;
+  opacity: 0;
+}
+.showResults {
+  opacity: 1;
 }
 .results-list {
   height: 100px;
@@ -152,7 +154,6 @@ html {
 .speed {
   width: 70%;
   margin: 0 auto;
-  /* border: solid 1px black; */
   display: flex;
   justify-content: space-around;
 }
