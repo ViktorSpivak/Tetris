@@ -14,7 +14,7 @@ html {
   margin: 0 auto;
   display: flex;
   justify-content: center;
-  width: 1420px;
+  width: 1220px;
 }
 .control {
   display: flex;
@@ -99,7 +99,7 @@ html {
   display: block;
   margin: 0 auto;
   width: 80%;
-  background-color: brown;
+  background-color: rgb(212, 107, 107);
   font-size: 40px;
   cursor: pointer;
 }

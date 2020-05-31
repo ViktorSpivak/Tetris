@@ -2,13 +2,7 @@ import figures from "./figures.js";
 
 class Tetris {
   constructor() {
-    this.netIds = this.initArrIds();
-    this.forecastArea = this.initForecastArea(this.netIds);
-    this.tube = this.initTube(this.netIds);
-    this.initButtons();
-    this.initLastMassage();
     this.figures = figures;
-    this.eventListeners = this.initListeners();
     this.dynamicParams = {
       moveVertical: null,
       runningFigure: null,
@@ -23,8 +17,17 @@ class Tetris {
       quantityOfBingoLines: 0,
       results: [],
     };
-    this.speed = this.initSpeedBar();
+    this.game = this.initGame();
   }
+  initGame = () => {
+    const netIds = this.initArrIds();
+    this.initForecastArea(netIds);
+    this.initTube(netIds);
+    this.initButtons();
+    this.initLastMassage();
+    this.initListeners();
+    this.initSpeedBar();
+  };
   initArrIds = () => {
     let id = 0;
     const arrOfIds = Array(20)
@@ -160,7 +163,8 @@ class Tetris {
     this.updateResultsBar();
     document.querySelector(".lastMassage").classList.remove("showLastMassage");
     document.querySelector(".score-count").textContent = "000";
-    Array.from(this.tube.children).forEach((el) => {
+    const tube = document.querySelector(".tube");
+    Array.from(tube.children).forEach((el) => {
       el.classList.remove("dynamic-figure");
       el.classList.remove("static-figure");
     });
@@ -422,8 +426,9 @@ class Tetris {
     }, 500);
   };
   initLastMassage = () => {
+    const tube = document.querySelector(".tube");
     const lastMassageElem = `<div class=lastMassage><p>GAME OVER</p><p class=finScore></p></div>`;
-    this.tube.insertAdjacentHTML("afterend", lastMassageElem);
+    tube.insertAdjacentHTML("afterend", lastMassageElem);
   };
 }
 const tetris = new Tetris();
