@@ -3,19 +3,18 @@ import figures from "./figures.js";
 class Tetris {
   constructor() {
     this.figures = figures;
+    this.dashboard = { startTime: null, timeOfGame: {}, score: 0, results: [] };
     this.dynamicParams = {
       moveVertical: null,
       runningFigure: null,
       nextRunningFigure: null,
       spinFigure: 0,
       coordinate: 3,
-      score: 0,
       speeds: { currentSpeed: 500, accelerateSpeed: 10 },
       accelerate: false,
       gameOver: false,
       stop: false,
-      quantityOfBingoLines: 0,
-      results: [],
+      quantityOfBingoLines: null,
     };
     this.game = this.initGame();
   }
@@ -104,6 +103,28 @@ class Tetris {
       .querySelector(".btnDown")
       .addEventListener("click", () => changeSpeed(false));
   };
+  initTimer = () => {
+    const startTime = Date.now();
+    const counts = document.querySelectorAll(".timer__value");
+    counts.forEach((el) => (el.textContent = "00"));
+    const count = () => {
+      const time = Date.now() - startTime;
+      const hours = Math.floor(
+        (time % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      );
+      const mins = Math.floor((time % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((time % (1000 * 60)) / 1000);
+      this.dashboard.timeOfGame = { hours, mins, secs };
+      return [hours, mins, secs];
+    };
+    const counterChange = (arr) => {
+      counts.forEach(
+        (el, idx) => (el.textContent = String(arr[idx]).padStart(2, "0"))
+      );
+    };
+
+    this.dashboard.startTime = setInterval(() => counterChange(count()), 1000);
+  };
   initButtons = () => {
     const btnArea = document.querySelector(".btnArea");
     btnArea.insertAdjacentHTML(
@@ -111,20 +132,27 @@ class Tetris {
       "<button class=btnStart name=start type=button>Start new game</button><button class=btnStop name=stop type=button>Pause</button><button class=btnContinue name=continueGame type=button>Continue</button>"
     );
   };
-  updateResultsBar = () => {
-    document.querySelector(".results").classList.add("showResults");
-    const resultsList = document.querySelector(".results-list");
-    this.dynamicParams.results.push(this.dynamicParams.score);
-    document
-      .querySelector(".results-list")
-      .insertAdjacentHTML(
-        "beforeend",
-        `<li> ${this.dynamicParams.score} </li>`
-      );
-    resultsList.scrollTo({
-      top: resultsList.scrollHeight,
-      behavior: "smooth",
+  initListeners = () => {
+    const btnArea = document.querySelector(".btnArea");
+    btnArea.addEventListener("click", (ev) => {
+      const { name } = ev.target;
+      name === "start" && this.startNewGame();
+      name === "stop" && this.pause();
+      name === "continueGame" && this.continueGame();
     });
+
+    document.body.addEventListener("keydown", (ev) => {
+      ev.preventDefault();
+      const { code } = ev;
+      code === "Space" && this.spin();
+      (code === "ArrowRight" || code === "ArrowLeft") && this.moveHorizon(code);
+      code === "ArrowDown" && this.accelerate();
+    });
+  };
+  initLastMassage = () => {
+    const tube = document.querySelector(".tube");
+    const lastMassageElem = `<div class=lastMassage><p>GAME OVER</p><p class=finScore></p></div>`;
+    tube.insertAdjacentHTML("afterend", lastMassageElem);
   };
   randomFigure = () => {
     const quantityOfFigures = this.figures.length;
@@ -148,6 +176,11 @@ class Tetris {
     this.dynamicParams.spinFigure = 0;
     this.dynamicParams.coordinate = 3;
     this.dynamicParams.runningFigure = this.dynamicParams.nextRunningFigure;
+    // if (this.dashboard.timeOfGame.mins % 10 === 0) {
+    //   const eventClick = new Event("click");
+    //   document.querySelector(".btnUp").dispatchEvent(eventClick);
+    // }
+
     this.nextFigureInit();
     this.moveFigure();
   };
@@ -157,8 +190,11 @@ class Tetris {
       this.nextFigureInit();
       this.dynamicParams.runningFigure = this.figures[figureNumber];
       this.moveFigure();
+      this.initTimer();
       return;
     }
+    clearInterval(this.dashboard.startTime);
+    this.initTimer();
     clearInterval(this.dynamicParams.moveVertical);
     this.updateResultsBar();
     document.querySelector(".lastMassage").classList.remove("showLastMassage");
@@ -173,72 +209,36 @@ class Tetris {
     this.dynamicParams.runningFigure = this.figures[figureNumber];
     this.dynamicParams.coordinate = 3;
     this.dynamicParams.stop = false;
-    this.dynamicParams.score = 0;
+    this.dashboard.score = 0;
     this.dynamicParams.gameOver = false;
     this.dynamicParams.spinFigure = 0;
     this.moveFigure();
-    // if (this.dynamicParams.gameOver) {
-    //   this.updateResultsBar();
-    //   document
-    //     .querySelector(".lastMassage")
-    //     .classList.remove("showLastMassage");
-    //   document.querySelector(".score-count").textContent = "000";
-    //   Array.from(this.tube.children).forEach((el) => {
-    //     el.classList.remove("dynamic-figure");
-    //     el.classList.remove("static-figure");
-    //   });
-    //   const figureNumber = this.randomFigure();
-    //   this.nextFigureInit();
-    //   this.dynamicParams.runningFigure = this.figures[figureNumber];
-    //   this.dynamicParams.coordinate = 3;
-    //   this.dynamicParams.stop = false;
-    //   this.dynamicParams.score = 0;
-    //   this.dynamicParams.gameOver = false;
-    //   this.moveFigure();
-    //   return;
-    // }
-    // if (this.dynamicParams.stop) {
-    //   this.updateResultsBar();
-    //   document
-    //     .querySelector(".lastMassage")
-    //     .classList.remove("showLastMassage");
-    //   document.querySelector(".score-count").textContent = "000";
-    //   Array.from(this.tube.children).forEach((el) => {
-    //     el.classList.remove("dynamic-figure");
-    //     el.classList.remove("static-figure");
-    //   });
-    //   const figureNumber = this.randomFigure();
-    //   this.nextFigureInit();
-    //   this.dynamicParams.runningFigure = this.figures[figureNumber];
-    //   this.dynamicParams.coordinate = 3;
-    //   this.dynamicParams.stop = false;
-    //   this.dynamicParams.score = 0;
-    //   this.dynamicParams.gameOver = false;
-    //   this.moveFigure();
-    //   return;
-    // }
-    // if (this.dynamicParams.stop || !this.dynamicParams.moveVertical) {
+  };
+  updateResultsBar = () => {
+    const timeOfGame = Object.values(this.dashboard.timeOfGame).join(":");
+    document.querySelector(".results").classList.add("showResults");
+    const resultsList = document.querySelector(".results-list");
+    this.dashboard.results.push(this.dashboard.score);
+    document
+      .querySelector(".results-list")
+      .insertAdjacentHTML(
+        "beforeend",
+        `<li><span>${timeOfGame}</span><span>   / ${this.dashboard.score}</span>  </li>`
+      );
+    resultsList.scrollTo({
+      top: resultsList.scrollHeight,
+      behavior: "smooth",
+    });
   };
   pause = () => {
     clearInterval(this.dynamicParams.moveVertical);
     this.dynamicParams.stop = true;
   };
-  initListeners = () => {
-    const btnArea = document.querySelector(".btnArea");
-    btnArea.addEventListener("click", (ev) => {
-      const { name } = ev.target;
-      name === "start" && this.startNewGame();
-      name === "stop" && this.pause();
-      name === "continueGame" && this.continueGame();
-    });
-
-    document.body.addEventListener("keydown", (ev) => {
-      ev.preventDefault();
-      const { code } = ev;
-      code === "Space" && this.spin();
-      (code === "ArrowRight" || code === "ArrowLeft") && this.moveHorizon(code);
-      code === "ArrowDown" && this.accelerate();
-    });
+  continueGame = () => {
+    if (this.dynamicParams.stop && this.dynamicParams.moveVertical) {
+      this.moveFigure();
+      this.dynamicParams.stop = false;
+    }
   };
   accelerate = () => {
     if (this.dynamicParams.moveVertical) {
@@ -308,12 +308,37 @@ class Tetris {
   };
   showLastMassage = () => {
     const finScore = document.querySelector(".finScore");
-    finScore.textContent = `Final score : ${this.dynamicParams.score}`;
+    finScore.textContent = `Final score : ${this.dashboard.score}`;
     document.querySelector(".lastMassage").classList.add("showLastMassage");
     this.dynamicParams.gameOver = true;
   };
+  updateScore = () => {
+    const { quantityOfBingoLines, speeds } = this.dynamicParams;
+    const priseOfBingoLine = 100;
+    const score =
+      quantityOfBingoLines > 1
+        ? quantityOfBingoLines * quantityOfBingoLines * priseOfBingoLine
+        : quantityOfBingoLines * priseOfBingoLine;
+    this.dashboard.score += score;
+    document.querySelector(".score-count").innerHTML = this.dashboard.score;
+    const upSpeedScoreInterval = 5;
+    if (
+      score >=
+      upSpeedScoreInterval * this.dynamicParams.speeds.currentSpeed
+    ) {
+      const minSpeedLevel = 0;
+      const maxSpeedLevel = 10;
+      const speedInterval = maxSpeedLevel + minSpeedLevel;
+      const changeSpeedStep = 100;
+      const upLevelSpeed = speeds.currentSpeed - changeSpeedStep;
+      this.dynamicParams.speeds.currentSpeed = upLevelSpeed;
+      const speedLevel = speedInterval - upLevelSpeed / 100;
+      const speedValue = document.querySelector(".speedValue");
+      speedValue.textContent = `${speedLevel}`;
+    }
+  };
   moveFigure() {
-    let { score, accelerate } = this.dynamicParams;
+    let { accelerate } = this.dynamicParams;
     let speed = accelerate
       ? this.dynamicParams.speeds.accelerateSpeed
       : this.dynamicParams.speeds.currentSpeed;
@@ -336,14 +361,7 @@ class Tetris {
         const quantityOfBingoLines = this.markingBingoLines();
         this.dynamicParams.quantityOfBingoLines = quantityOfBingoLines;
         if (quantityOfBingoLines) {
-          score =
-            quantityOfBingoLines > 1
-              ? quantityOfBingoLines * quantityOfBingoLines * 100
-              : quantityOfBingoLines * 100;
-          this.dynamicParams.score += score;
-          document.querySelector(
-            ".score-count"
-          ).innerHTML = this.dynamicParams.score;
+          this.updateScore();
           this.deleteBingoLines();
         }
 
@@ -371,12 +389,6 @@ class Tetris {
 
     this.dynamicParams.moveVertical = moveVertical;
   }
-  continueGame = () => {
-    if (this.dynamicParams.stop && this.dynamicParams.moveVertical) {
-      this.moveFigure();
-      this.dynamicParams.stop = false;
-    }
-  };
   markingBingoLines = () => {
     let quantityOfBingoLines = null;
     for (let line = 0; line <= 190; line += 10) {
@@ -424,11 +436,6 @@ class Tetris {
         });
       }
     }, 500);
-  };
-  initLastMassage = () => {
-    const tube = document.querySelector(".tube");
-    const lastMassageElem = `<div class=lastMassage><p>GAME OVER</p><p class=finScore></p></div>`;
-    tube.insertAdjacentHTML("afterend", lastMassageElem);
   };
 }
 const tetris = new Tetris();

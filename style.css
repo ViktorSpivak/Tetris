@@ -82,8 +82,16 @@ html {
   align-self: center;
   flex-basis: 20%;
 }
-.score {
+.timer {
   margin: 0 auto;
+  width: 80%;
+  text-align: center;
+  font-size: 25px;
+  color: olive;
+  border: solid 3px rgb(42, 95, 165);
+}
+.score {
+  margin: 20px auto 0;
   width: 80%;
   text-align: center;
   font-size: 35px;
