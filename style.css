@@ -144,7 +144,7 @@ html {
   background-color: rgb(124, 171, 224);
 }
 .results {
-  width: 80%;
+  /* width: 80%; */
   text-align: center;
   margin: 0 auto;
   border: solid 3px rgb(9, 144, 72);

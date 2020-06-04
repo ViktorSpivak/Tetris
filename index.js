@@ -1,9 +1,20 @@
 import figures from "./figures.js";
+import markingBingoLines from "./actions/markingBingoLines.js";
+import deleteBingoLines from "./actions/deleteBingoLines.js";
+import updateResultsBar from "./actions/updateResultsBar.js";
+import updateScore from "./actions/updateScore.js";
+import showLastMassage from "./actions/showLastMassage.js";
 
 class Tetris {
   constructor() {
     this.figures = figures;
-    this.dashboard = { startTime: null, timeOfGame: {}, score: 0, results: [] };
+    this.dashboard = {
+      upLevelInterval: null,
+      startTimeInterval: null,
+      timeOfGame: {},
+      score: 0,
+      results: [],
+    };
     this.dynamicParams = {
       moveVertical: null,
       runningFigure: null,
@@ -14,7 +25,6 @@ class Tetris {
       accelerate: false,
       gameOver: false,
       stop: false,
-      quantityOfBingoLines: null,
     };
     this.game = this.initGame();
   }
@@ -122,8 +132,15 @@ class Tetris {
         (el, idx) => (el.textContent = String(arr[idx]).padStart(2, "0"))
       );
     };
-
-    this.dashboard.startTime = setInterval(() => counterChange(count()), 1000);
+    const upLevelTime = 600000;
+    this.dashboard.upLevelInterval = setInterval(() => {
+      const eventClick = new Event("click");
+      document.querySelector(".btnUp").dispatchEvent(eventClick);
+    }, upLevelTime);
+    this.dashboard.startTimeInterval = setInterval(
+      () => counterChange(count()),
+      1000
+    );
   };
   initButtons = () => {
     const btnArea = document.querySelector(".btnArea");
@@ -171,19 +188,6 @@ class Tetris {
         el.classList.add("nextFig__paint")
     );
   };
-  startNewFigure = () => {
-    this.dynamicParams.moveVertical = null;
-    this.dynamicParams.spinFigure = 0;
-    this.dynamicParams.coordinate = 3;
-    this.dynamicParams.runningFigure = this.dynamicParams.nextRunningFigure;
-    // if (this.dashboard.timeOfGame.mins % 10 === 0) {
-    //   const eventClick = new Event("click");
-    //   document.querySelector(".btnUp").dispatchEvent(eventClick);
-    // }
-
-    this.nextFigureInit();
-    this.moveFigure();
-  };
   startNewGame = () => {
     if (!this.dynamicParams.moveVertical) {
       const figureNumber = this.randomFigure();
@@ -193,10 +197,10 @@ class Tetris {
       this.initTimer();
       return;
     }
-    clearInterval(this.dashboard.startTime);
-    this.initTimer();
+    clearInterval(this.dashboard.startTimeInterval);
     clearInterval(this.dynamicParams.moveVertical);
-    this.updateResultsBar();
+    this.initTimer();
+    this.dashboard.results = updateResultsBar(this.dashboard);
     document.querySelector(".lastMassage").classList.remove("showLastMassage");
     document.querySelector(".score-count").textContent = "000";
     const tube = document.querySelector(".tube");
@@ -214,21 +218,13 @@ class Tetris {
     this.dynamicParams.spinFigure = 0;
     this.moveFigure();
   };
-  updateResultsBar = () => {
-    const timeOfGame = Object.values(this.dashboard.timeOfGame).join(":");
-    document.querySelector(".results").classList.add("showResults");
-    const resultsList = document.querySelector(".results-list");
-    this.dashboard.results.push(this.dashboard.score);
-    document
-      .querySelector(".results-list")
-      .insertAdjacentHTML(
-        "beforeend",
-        `<li><span>${timeOfGame}</span><span>   / ${this.dashboard.score}</span>  </li>`
-      );
-    resultsList.scrollTo({
-      top: resultsList.scrollHeight,
-      behavior: "smooth",
-    });
+  startNewFigure = () => {
+    this.dynamicParams.moveVertical = null;
+    this.dynamicParams.spinFigure = 0;
+    this.dynamicParams.coordinate = 3;
+    this.dynamicParams.runningFigure = this.dynamicParams.nextRunningFigure;
+    this.nextFigureInit();
+    this.moveFigure();
   };
   pause = () => {
     clearInterval(this.dynamicParams.moveVertical);
@@ -306,37 +302,6 @@ class Tetris {
 
     this.dynamicParams.coordinate = coordinate;
   };
-  showLastMassage = () => {
-    const finScore = document.querySelector(".finScore");
-    finScore.textContent = `Final score : ${this.dashboard.score}`;
-    document.querySelector(".lastMassage").classList.add("showLastMassage");
-    this.dynamicParams.gameOver = true;
-  };
-  updateScore = () => {
-    const { quantityOfBingoLines, speeds } = this.dynamicParams;
-    const priseOfBingoLine = 100;
-    const score =
-      quantityOfBingoLines > 1
-        ? quantityOfBingoLines * quantityOfBingoLines * priseOfBingoLine
-        : quantityOfBingoLines * priseOfBingoLine;
-    this.dashboard.score += score;
-    document.querySelector(".score-count").innerHTML = this.dashboard.score;
-    const upSpeedScoreInterval = 5;
-    if (
-      score >=
-      upSpeedScoreInterval * this.dynamicParams.speeds.currentSpeed
-    ) {
-      const minSpeedLevel = 0;
-      const maxSpeedLevel = 10;
-      const speedInterval = maxSpeedLevel + minSpeedLevel;
-      const changeSpeedStep = 100;
-      const upLevelSpeed = speeds.currentSpeed - changeSpeedStep;
-      this.dynamicParams.speeds.currentSpeed = upLevelSpeed;
-      const speedLevel = speedInterval - upLevelSpeed / 100;
-      const speedValue = document.querySelector(".speedValue");
-      speedValue.textContent = `${speedLevel}`;
-    }
-  };
   moveFigure() {
     let { accelerate } = this.dynamicParams;
     let speed = accelerate
@@ -358,11 +323,13 @@ class Tetris {
         runningFigureOnTube.forEach((elem) =>
           elem.classList.replace("dynamic-figure", "static-figure")
         );
-        const quantityOfBingoLines = this.markingBingoLines();
-        this.dynamicParams.quantityOfBingoLines = quantityOfBingoLines;
+        const quantityOfBingoLines = markingBingoLines();
         if (quantityOfBingoLines) {
-          this.updateScore();
-          this.deleteBingoLines();
+          this.dashboard.score = updateScore(
+            this.dashboard,
+            quantityOfBingoLines
+          );
+          deleteBingoLines(quantityOfBingoLines);
         }
 
         this.dynamicParams.accelerate = false;
@@ -371,7 +338,7 @@ class Tetris {
           this.startNewFigure();
           return;
         } else {
-          this.showLastMassage();
+          this.dynamicParams.gameOver = showLastMassage(this.dashboard);
           return;
         }
       } else {
@@ -389,53 +356,5 @@ class Tetris {
 
     this.dynamicParams.moveVertical = moveVertical;
   }
-  markingBingoLines = () => {
-    let quantityOfBingoLines = null;
-    for (let line = 0; line <= 190; line += 10) {
-      for (let j = 0; j <= 9; j += 1) {
-        let id = line + j;
-        if (document.getElementById(id).classList.contains("static-figure")) {
-          if (id === line + 9) {
-            quantityOfBingoLines++;
-
-            for (let x = line; x <= id; x++) {
-              document.getElementById(x).classList.remove("static-figure");
-              document.getElementById(x).classList.add("bingo-line");
-            }
-          }
-        } else break;
-      }
-    }
-    return quantityOfBingoLines;
-  };
-  deleteBingoLines = () => {
-    setTimeout(() => {
-      const { quantityOfBingoLines } = this.dynamicParams;
-      for (let i = 0; i < quantityOfBingoLines; i++) {
-        const bingoLines = document.querySelectorAll(".bingo-line");
-        const firstElemIdBingoLine = bingoLines[0].id;
-        bingoLines.forEach(
-          (el) =>
-            Number(el.id) < Number(firstElemIdBingoLine) + 10 &&
-            el.classList.remove("bingo-line")
-        );
-        const staticElements = document.querySelectorAll(".static-figure");
-        const staticElIdsAboveBingoLine = Array.from(staticElements)
-          .map((el) => Number(el.id))
-          .filter((el) => el < Number(bingoLines[0].id));
-        staticElIdsAboveBingoLine.forEach((el) => {
-          document.getElementById(Number(el)).classList.remove("static-figure");
-          document
-            .getElementById(Number(el) + 10)
-            .classList.add("static-figure");
-        });
-        staticElIdsAboveBingoLine.forEach((el) => {
-          document
-            .getElementById(Number(el) + 10)
-            .classList.add("static-figure");
-        });
-      }
-    }, 500);
-  };
 }
 const tetris = new Tetris();
